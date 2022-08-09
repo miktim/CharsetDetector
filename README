@@ -1,4 +1,4 @@
-# Java SE 8+ Charset Detector, MIT (c) miktim@mail.ru
+# Java SE 8+ Charset Detector, MIT (c) 2022 miktim@mail.ru
 
 Detection is based on the frequency of letters of the alphabet
 and built-in Java character encoders.
