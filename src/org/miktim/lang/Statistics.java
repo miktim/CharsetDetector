@@ -1,4 +1,5 @@
 /*
+ * Charset Detector Statistics, MIT (c) 2022 miktim@mail.ru
  */
 package org.miktim.lang;
 

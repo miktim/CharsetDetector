@@ -1,6 +1,8 @@
 /*
+ * Charset Detector Test MIT (c) 2022 miktim@mail.ru
  */
-package lang;
+
+//package lang;
 
 import java.io.File;
 import java.io.FileInputStream;

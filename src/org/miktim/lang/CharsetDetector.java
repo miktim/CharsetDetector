@@ -1,4 +1,5 @@
 /*
+ * Charset Detector, MIT (c) 2022 miktim@mail.ru
  */
 package org.miktim.lang;
 
@@ -11,7 +12,7 @@ import java.io.UnsupportedEncodingException;
 
 public class CharsetDetector {
 
-    static final String RU_ENCODERS = "x-UTF-16LE-BOM,x-UTF-32BE-BOM,x-UTF-16LE-BOM,utf-8,utf-16le,windows-1251,cp866,koi8-r";
+    static final String RU_ENCODERS = "x-UTF-16LE-BOM,UTF-16BE,x-UTF-32LE-BOM,x-UTF-32BE-BOM,UTF-8,windows-1251,cp866,koi8-r";
     static final String RU_FREQUENCY = "оеаитнсрвлкмдпуяыгзбчйчъжьюшцщэфёОЕАИТНСРВЛКМДПУЯЫГЗБЧЙЧЪЖЬЮШЦЩЭФЁ";
 
     private String encoders = RU_ENCODERS;
