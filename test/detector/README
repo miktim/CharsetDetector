@@ -1,3 +1,4 @@
 JDK 8+ required
+*.txt files was created using the Kate editor.
 
 Note: utf-8-bom.txt detected as utf-8 encoded file. There is no BOM utf-8 encoder in Java8.
