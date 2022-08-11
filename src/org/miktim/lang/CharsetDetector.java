@@ -13,50 +13,53 @@ import java.io.UnsupportedEncodingException;
 public class CharsetDetector {
 
     static final String RU_ENCODERS = "x-UTF-16LE-BOM,UTF-16BE,x-UTF-32LE-BOM,x-UTF-32BE-BOM,UTF-8,windows-1251,cp866,koi8-r";
-    static final String RU_FREQUENCY = "оеаитнсрвлкмдпуяыгзбчйчъжьюшцщэфёОЕАИТНСРВЛКМДПУЯЫГЗБЧЙЧЪЖЬЮШЦЩЭФЁ";
+    static final String RU_EXPECTED = "оеаитнсрвлкмдпуяыгзбчйчъжьюшцщэфёОЕАИТНСРВЛКМДПУЯЫГЗБЧЙЧЪЖЬЮШЦЩЭФЁ";
+//    static final String EN_EXPECTED = "eariotnslcudpmhgbfywkvxzjqEARIOTNSLCUDPMHGBFYWKVXZJQ";
+    static String UNWANTED = "";
+//    static final String PSEUDOGRAPHICS = "─│┌┐└┘├┤┬┴┼▀▄█▌▐░▒▓⌠■═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬";
 
     private String encoders = RU_ENCODERS;
-    private String frequency = RU_FREQUENCY;
-    private Statistics statistics = new Statistics();
+    private String expected = RU_EXPECTED;//+ EN_EXPECTED;
+    private String unwanted = UNWANTED;
+    private CharsetStatistics statistics = new CharsetStatistics();
+
+    static {
+        byte[] unwanted = new byte[31];
+        for (int i = 0; i < unwanted.length; i++) {
+            unwanted[i] = (byte) i;
+        }
+        UNWANTED = (new String(unwanted)).replaceAll("\t|\r|\n|\f|\b| ", "") + (char) 0x7F;
+    }
 
     public CharsetDetector() {
     }
 
-    public CharsetDetector(String encoders, String frequency)
-            throws UnsupportedEncodingException  {
-        for(String encoder : encoders.split(",")) {// check encoder exists
-           String s = new String(RU_FREQUENCY.getBytes(), encoder); 
+    public CharsetDetector(String encoders, String expected, String unwanted)
+            throws UnsupportedEncodingException {
+        this.encoders = encoders.replace(" ", "");
+        for (String encoder : encoders.split(",")) {// check encoder exists
+            String s = new String(RU_ENCODERS.getBytes(), encoder);
         }
-        this.encoders = encoders;
-        this.frequency = frequency;
+        this.expected = expected;
+        if (unwanted != null) {
+            this.unwanted = unwanted;
+        }
     }
 
     public String[] listEncoders() {
         return encoders.split(",");
     }
-    
-    public String getFrequency() {
-        return frequency;
+
+    public String getExpected() {
+        return expected;
+    }
+
+    public String getUnwanted() {
+        return unwanted;
     }
 
     public String detect(File file) throws FileNotFoundException, IOException {
         return detect(new FileInputStream(file));
-    }
-
-    public String detect(byte[] buf, int buflen) throws UnsupportedEncodingException {
-        String charset = null;
-        int weight = 0;
-        statistics = new Statistics();
-        for (String charsetName : listEncoders()) {
-            String sbuf = new String(buf, 0, buflen, charsetName);
-            int wset = lettersFrequency(sbuf);
-            statistics.addEntry(charsetName, wset, lettersCount(sbuf), sbuf.length());
-            if (weight < wset) {
-                charset = charsetName;
-                weight = wset;
-            }
-        }
-        return charset;
     }
 
     public String detect(InputStream in) throws IOException {
@@ -65,27 +68,50 @@ public class CharsetDetector {
         return detect(buf, bufLen);
     }
 
-    int lettersFrequency(String s) {
-        int frequency = 0;
-        for (char c : s.toCharArray()) {
-            int f = this.frequency.indexOf(c);
-            frequency += (f == -1 ? 0 : this.frequency.length() - f);
+    public String detect(byte[] buf, int bytesIn) throws UnsupportedEncodingException {
+        String charset = null;
+        int rating = 0;
+        statistics = new CharsetStatistics();
+        for (String charsetName : listEncoders()) {
+            String sbuf = new String(buf, 0, bytesIn, charsetName);
+            int csRating = charsetRating(sbuf);
+            statistics.addEntry(charsetName, csRating, lettersCount(sbuf), sbuf.length());
+            if (rating < csRating) {
+                charset = charsetName;
+                rating = csRating;
+            }
         }
-        return frequency;
+        if (charset != null) {
+            statistics.entries.get(charset).detected = true;
+        }
+        return charset;
+    }
+
+    public CharsetStatistics getStatistics() {
+        return statistics;
+    }
+
+    int charsetRating(String s) {
+        int expectedCnt = 0;
+        int unwantedCnt = 0;
+        int base = Math.max(this.expected.length(), this.unwanted.length());
+        for (char c : s.toCharArray()) {
+            int f = this.expected.indexOf(c);
+            expectedCnt += (f == -1 ? 0 : base - f);
+            f = this.unwanted.indexOf(c);
+            unwantedCnt += (f == -1 ? 0 : base - f);
+        }
+
+        return expectedCnt - unwantedCnt;
     }
 
     int lettersCount(String s) {
         int count = 0;
-        for (char c : s.toLowerCase().toCharArray()) {
-            if (this.frequency.indexOf(c) >= 0) {
+        for (char c : s.toCharArray()) {
+            if (this.expected.indexOf(c) >= 0) {
                 count++;
             }
         }
         return count;
     }
-
-    public Statistics statistics() {
-        return statistics;
-    }
-
 }

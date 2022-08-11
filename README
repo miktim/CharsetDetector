@@ -1,7 +1,11 @@
 # Java SE 8+ Charset Detector, MIT (c) 2022 miktim@mail.ru
 
-Detection is based on the frequency of letters of the alphabet
-and built-in Java character encoders.
+Encoding detection is based on the contents of the file, the frequency of the letters of the national alphabet and the built-in Java character encoders.
+Hint: exclude by extension explicitly binary files (.bin, .exe, .jar, , zip, etc.).
+
+Russian is the default language. Java encoders:
+x-UTF-16LE-BOM,UTF-16BE,x-UTF-32LE-BOM,x-UTF-32BE-BOM,UTF-8,windows-1251,cp866,koi8-r.
+
 See https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html
 
 package org.miktim.lang
@@ -11,24 +15,30 @@ Overview:
 Class CharsetDetector
 
   Constructors:
-    CharsetDetector();
-    CharsetDetector(String encoders, String frequency) throws UnsupportedEncodingException; // Russians by default
-        encoders: comma delimited Java charset encoders
-        frequency: string of letters in descending order of frequency
+    CharsetDetector(); 
+    CharsetDetector(String encoders, String expected, String unwanted)
+             throws UnsupportedEncodingException; 
+//      encoders: comma-separated national and multilingual Java encoder names.
+//                The order of encoders is significant;
+//      expected: a string of expected national letters in descending order of frequency;
+//      unwanted: a string of unwanted letters or null. Unwanted defaults:
+//                chars 0-31, except \t\r\n\f\b, and 0x7F(DEL).
 
   Methods:
-    String detect(byte[] buffer, int bytesIn); // Java charset encoder returned or null
+    // detect methods return Java charset encoder name or null
+    String detect(byte[] buffer, int bytesIn); // initial bytes of the file
     String detect(InputStream in) throws IOException;
     String detect(File file) throws NoSuchFileException, IOException;
 
     String[] listEncoders();
-    String getFrequency(); 
-    Statistics statistics();
+    String getExpected(); 
+    String getUnwanted();
+    CharsetStatistics getStatistics(); 
 
-Class Statistics
-  See Statistics.java in sources
+Class CharsetStatistics see in sources
+ 
 
 Usage:
-  See ./test/lang/DetectorTest.java
+  See ./test/detector/DetectorTest.java
 
   
